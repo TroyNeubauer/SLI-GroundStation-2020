@@ -1,0 +1,51 @@
+# Directories
+**/.vs/
+**/bin/
+!vendor/bin/
+**/bin-int/
+**/peda-session*
+
+# Files
+*.user
+**/*.TMP
+**/*.xcodeproj
+**/*.xcworkspace
+
+**/.DS_Store
+
+#Hazel Files
+
+**/imgui.ini
+Sandbox/imgui_log.txt
+Sandbox/test.dat
+Sandbox/1page.dat
+Sandbox/logs/
+script/node_modules
+
+Sandbox/pics/
+Sandbox/pics - OLD/
+Sandbox/pics.zip
+Test/
+
+**/logs/
+
+**/*.hzp.json
+
+
+#MSVC
+**/*.sln
+**/*.vcxproj
+**/*.vcxproj.user
+**/*.vcxproj.filters
+
+#make
+**/Makefile
+**/.project
+**/.workspace
+**/Makefile
+
+**/.gdb_history
+
+#Eclipse
+**/.cproject
+.settings/
