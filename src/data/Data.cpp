@@ -36,6 +36,7 @@ char DIGITS[10] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
 void PrintSection(const char* unit, uint8_t exponent, char(&result)[16], int& offset)
 {
 	if (exponent == 0) return;
+	HZ_ASSERT(exponent < 10, "Unit exponent out of range!");
 
 	while (*unit)
 	{
@@ -45,11 +46,9 @@ void PrintSection(const char* unit, uint8_t exponent, char(&result)[16], int& of
 	if (exponent >= 2) result[offset++] = '^'; result[offset++] = DIGITS[exponent];
 }
 
-void GetShortUnitName(MKSUnit units, char(&result)[16])
+void GetShortUnitString(MKSUnit units, char(&result)[16])
 {
 	HZ_ASSERT(glm::abs(units.Meters) < 10, "Unit exponent out of range!");
-	HZ_ASSERT(glm::abs(units.Kilograms) < 10, "Unit exponent out of range!");
-	HZ_ASSERT(glm::abs(units.Seconds) < 10, "Unit exponent out of range!");
 
 	int offset = 0;
 	//Print numerator units first

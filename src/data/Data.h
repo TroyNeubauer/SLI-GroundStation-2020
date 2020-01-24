@@ -18,20 +18,19 @@ enum class DataPointSource
 };
 
 
-
 struct MKSUnit {
 	//Each field here represents the exponent of that sub unit.
 	int8_t Meters;
 	int8_t Kilograms;
 	int8_t Seconds;
 	
-	//Mu
-	int8_t Base = 1;
+	//Mutiplier for creating units like km, hours, etc
+	int8_t Base = 10;
 	int8_t Exponent = 0;
 };
 
 MKSUnit GetUnitsFromType(DataPointType type);
-void GetShortUnitName(MKSUnit units, char (&result)[16]);
+void GetShortUnitString(MKSUnit units, char (&result)[16]);
 
 struct Unit {
 public:
