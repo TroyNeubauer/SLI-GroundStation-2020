@@ -33,40 +33,72 @@ MKSUnit GetUnitsFromType(DataPointType type)
 
 char DIGITS[10] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
 
-void PrintSection(const char* unit, uint8_t exponent, char(&result)[16], int& offset)
+void PrintSection(const char* unit, int8_t exponent, char(&result)[16], int& offset, int& printCount)
 {
 	if (exponent == 0) return;
-	HZ_ASSERT(exponent < 10, "Unit exponent out of range!");
-
+	HZ_ASSERT(glm::abs(exponent) < 10, "Unit exponent out of range!");
+	if (printCount > 0)
+	{
+		result[offset++] = ' ';
+	}
 	while (*unit)
 	{
 		result[offset++] = unit[0];
 		unit++;
 	}
-	if (exponent >= 2) result[offset++] = '^'; result[offset++] = DIGITS[exponent];
+	//For all exponents other than 1 we need to print the exponent
+	if (exponent != 1)
+	{
+		result[offset++] = '^';
+		if (exponent >= 0)
+		{
+			result[offset++] = DIGITS[exponent];
+		}
+		else
+		{
+			result[offset++] = '-';
+			result[offset++] = DIGITS[-exponent];
+		}
+		
+	}
+	printCount++;
 }
 
 void GetShortUnitString(MKSUnit units, char(&result)[16])
 {
-	HZ_ASSERT(glm::abs(units.Meters) < 10, "Unit exponent out of range!");
-
 	int offset = 0;
+	int printCount = 0;
 	//Print numerator units first
-	PrintSection("m",  units.Meters, result, offset);
-	PrintSection("kg", units.Kilograms, result, offset);
-	PrintSection("s",  units.Seconds, result, offset);
+	if (units.Meters > 0) PrintSection("m",  units.Meters, result, offset, printCount);
+	if (units.Kilograms > 0) PrintSection("kg", units.Kilograms, result, offset, printCount);
+	if (units.Seconds > 0) PrintSection("s",  units.Seconds, result, offset, printCount);
 
-	//How many terms are in the denominator
+	printCount = 0;
+	//How many terms are in the numerator & denominator
+	int neumCount = (units.Meters > 0) + (units.Kilograms > 0) + (units.Seconds > 0);
 	int denomCount = (units.Meters < 0) + (units.Kilograms < 0) + (units.Seconds < 0);
 	if (denomCount > 0)
 	{
-		result[offset++] = '/';
-		if (denomCount > 1) result[offset++] = '(';
-		PrintSection("m",  -units.Meters, result, offset);
-		PrintSection("kg", -units.Kilograms, result, offset);
-		PrintSection("s",  -units.Seconds, result, offset);
+		if (neumCount == 0)
+		{
+			//Use negitive exponents
+			if (units.Meters < 0) PrintSection("m",  units.Meters, result, offset, printCount);
+			if (units.Kilograms < 0) PrintSection("kg", units.Kilograms, result, offset, printCount);
+			if (units.Seconds < 0) PrintSection("s",  units.Seconds, result, offset, printCount);
 
-		if (denomCount > 1) result[offset++] = ')';
+		}
+		else
+		{
+			//There are sub-units in the numerator so dump the negitive exponents in the denominator
+			result[offset++] = '/';
+			if (denomCount > 1) result[offset++] = '(';
+			
+			if (units.Meters < 0) PrintSection("m",  -units.Meters, result, offset, printCount);
+			if (units.Kilograms < 0) PrintSection("kg", -units.Kilograms, result, offset, printCount);
+			if (units.Seconds < 0) PrintSection("s",  -units.Seconds, result, offset, printCount);
+
+			if (denomCount > 1) result[offset++] = ')';	
+		}
 	}
 
 	result[offset++] = '\0';

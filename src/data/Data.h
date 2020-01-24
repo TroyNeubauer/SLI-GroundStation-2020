@@ -42,7 +42,7 @@ public:
 	static const constexpr MKSUnit METERS_PER_SECOND = { 1, 0, -1 };//m/s
 	static const constexpr MKSUnit METERS_PER_SECOND2 = { 1, 0, -2 };//m/(s^2)
 
-	static const constexpr MKSUnit KILOGRAMS = { 1, 0, 0 };
+	static const constexpr MKSUnit KILOGRAMS = { 0, 1, 0 };
 
 	static const constexpr MKSUnit SECONDS = { 0, 0, 1 };
 

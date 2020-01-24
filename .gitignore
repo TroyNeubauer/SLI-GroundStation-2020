@@ -43,6 +43,7 @@ Test/
 **/.project
 **/.workspace
 **/Makefile
+**.make
 
 **/.gdb_history
 

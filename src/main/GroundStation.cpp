@@ -1,7 +1,9 @@
 
 #include "GroundStation.h"
 
-#include <Hazel/Core/EntryPoint.h>
+#ifndef GROUND_STATION_TEST//A seperate main() is provided by the Test project
+	#include <Hazel/Core/EntryPoint.h>
+#endif
 
 GroundStation::GroundStation()
 {

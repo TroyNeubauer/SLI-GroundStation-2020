@@ -27,3 +27,36 @@ project "GroundStation"
 			"--preload-file assets"
 		}
 
+project "Test"
+	location "Test"
+
+	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
+	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
+
+	files
+	{
+		"Test/src/**.h",
+		"Test/src/**.cpp",
+		"src/**.h",
+		"src/**.cpp",
+	}
+
+	defines
+	{
+		"GROUND_STATION_TEST",
+	}
+
+	includedirs
+	{
+		"src/",
+		"Test/src/",
+	}
+
+	sysincludedirs
+	{
+		"Test/vendor/",
+	}
+
+	HazelDependencies()
+
+
