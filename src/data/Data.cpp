@@ -25,13 +25,25 @@ MKSUnit GetUnitsFromType(DataPointType type)
 		case DataPointType::STATUS:				return Unit::NONE;
 		case DataPointType::UPTIME:				return Unit::SECONDS;
 
-		default: HZ_ASSERT(false, "Unknown DataPointType!");
+		default: HZ_ASSERT(false, "Unknown DataPointType!"); return Unit::NONE;
 
 
 	}
 }
 
 char DIGITS[10] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
+
+void PrintSection(const char* unit, uint8_t exponent, char(&result)[16], int& offset)
+{
+	if (exponent == 0) return;
+
+	while (*unit)
+	{
+		result[offset++] = unit[0];
+		unit++;
+	}
+	if (exponent >= 2) result[offset++] = '^'; result[offset++] = DIGITS[exponent];
+}
 
 void GetShortUnitName(MKSUnit units, char(&result)[16])
 {
@@ -41,22 +53,9 @@ void GetShortUnitName(MKSUnit units, char(&result)[16])
 
 	int offset = 0;
 	//Print numerator units first
-	if (units.Meters > 0)
-	{
-		result[offset++] = 'm';
-		if (units.Meters >= 2) result[offset++] = '^'; result[offset++] = DIGITS[units.Meters];
-	}
-	if (units.Kilograms > 0)
-	{
-		result[offset++] = 'k';
-		result[offset++] = 'g';
-		if (units.Kilograms >= 2) result[offset++] = '^'; result[offset++] = DIGITS[units.Kilograms];
-	}
-	if (units.Seconds > 0)
-	{
-		result[offset++] = 's';
-		if (units.Meters >= 2) result[offset++] = '^'; result[offset++] = DIGITS[units.Seconds];
-	}
+	PrintSection("m",  units.Meters, result, offset);
+	PrintSection("kg", units.Kilograms, result, offset);
+	PrintSection("s",  units.Seconds, result, offset);
 
 	//How many terms are in the denominator
 	int denomCount = (units.Meters < 0) + (units.Kilograms < 0) + (units.Seconds < 0);
@@ -64,26 +63,14 @@ void GetShortUnitName(MKSUnit units, char(&result)[16])
 	{
 		result[offset++] = '/';
 		if (denomCount > 1) result[offset++] = '(';
-		if (units.Meters < 0)
-		{
-			result[offset++] = 'm';
-			if (units.Meters <= -2) result[offset++] = '^'; result[offset++] = DIGITS[-units.Meters];
-		}
-		if (units.Kilograms < 0)
-		{
-			result[offset++] = 'k';
-			result[offset++] = 'g';
-			if (units.Kilograms <= -2) result[offset++] = '^'; result[offset++] = DIGITS[-units.Kilograms];
-		}
-		if (units.Seconds < 0)
-		{
-			result[offset++] = 's';
-			if (units.Meters <= -2) result[offset++] = '^'; result[offset++] = DIGITS[-units.Seconds];
-		}
-
+		PrintSection("m",  -units.Meters, result, offset);
+		PrintSection("kg", -units.Kilograms, result, offset);
+		PrintSection("s",  -units.Seconds, result, offset);
 
 		if (denomCount > 1) result[offset++] = ')';
 	}
-	HZ_ASSERT(offset < sizeof(result), "Unit string too large for buffer!");
+
+	result[offset++] = '\0';
+	HZ_ASSERT(offset <= sizeof(result), "Unit string too large for buffer!");
 }
 

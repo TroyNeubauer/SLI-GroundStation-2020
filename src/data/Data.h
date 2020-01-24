@@ -24,6 +24,10 @@ struct MKSUnit {
 	int8_t Meters;
 	int8_t Kilograms;
 	int8_t Seconds;
+	
+	//Mu
+	int8_t Base = 1;
+	int8_t Exponent = 0;
 };
 
 MKSUnit GetUnitsFromType(DataPointType type);
