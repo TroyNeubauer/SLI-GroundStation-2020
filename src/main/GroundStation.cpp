@@ -7,6 +7,9 @@
 
 GroundStation::GroundStation()
 {
+	GSTime::InitClock();
+
+	m_StartTime = GSTime::Now();
 }
 
 void GroundStation::Update(Hazel::Timestep ts)

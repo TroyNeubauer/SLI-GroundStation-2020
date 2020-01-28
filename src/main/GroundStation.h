@@ -2,6 +2,7 @@
 
 #include <Hazel.h>
 
+#include "data/Data.h"
 
 class GroundStation : public Hazel::Application
 {
@@ -16,7 +17,7 @@ public:
 
 
 private:
-
+	GSTime m_StartTime;
 
 };
 

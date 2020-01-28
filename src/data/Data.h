@@ -1,8 +1,12 @@
 #pragma once
 
-#include <stdint.h>
+#include <vector>
+#include <map>
 
-#include <TUtil/vendor/str/Str.h>
+#include <TUtil/StringUtils.h>
+
+#include "GSTime.h"
+
 
 enum class DataPointType
 {
@@ -12,21 +16,28 @@ enum class DataPointType
 	UPTIME, //Double (seconds)
 };
 
-enum class DataPointSource
+
+enum class DataSource
 {
 	GPS, ALTIMETER_1, ALTIMETER_2, ACCELEROMETER, GROUND_STATION, STM_F103, STM_F205, OTHER
 };
 
 
+enum class DataAttachmentType
+{
+	VALUE, DERITIVE, DERITIVE2, INTEGRAL, INTEGRAL2
+};
+
+
 struct MKSUnit {
 	//Each field here represents the exponent of that sub unit.
-	int8_t Meters;
-	int8_t Kilograms;
-	int8_t Seconds;
+	std::int8_t Meters;
+	std::int8_t Kilograms;
+	std::int8_t Seconds;
 	
 	//Mutiplier for creating units like km, hours, etc
-	int8_t Base = 10;
-	int8_t Exponent = 0;
+	std::int8_t Base = 10;
+	std::int8_t Exponent = 0;
 };
 
 MKSUnit GetUnitsFromType(DataPointType type);
@@ -46,23 +57,69 @@ public:
 
 	static const constexpr MKSUnit SECONDS = { 0, 0, 1 };
 
-
 };
+
 
 struct DataPoint
 {
 	union {
-		int64_t Int;
+		std::int64_t Int;
 		double Double;
-		Str16 String;
-	} Data;
-
-	DataPointType Type;
-	DataPointSource Source;
+		char String[16];
+	};
 
 	//The time this sample was recorded at
-	uint64_t Seconds;//Seconds since Jan 1, 1970
-	uint64_t NanoSeconds;//The nanoseconds within the second (0-999,999,999ns)
+	GSTime Time;
 
-	inline MKSUnit Units() { return GetUnitsFromType(Type);  }
+public:
+	inline DataPoint(uint64_t value, GSTime time = GSTime::Now()) : Int(value), Time(time) {}
+	inline DataPoint(double value, GSTime time = GSTime::Now()) : Double(value), Time(time) {}
+	inline DataPoint(const char* value, GSTime time = GSTime::Now()) : Time(time) { TUtil::StringUtils::Copy(String, sizeof(String), value); }
+
 };
+
+//Represents one specific graph
+//EG. Accecelerometer velocity
+struct DataAttachment
+{
+	DataPointType Type;
+	std::vector<DataPoint> Points;
+};
+
+
+//Stores mutiple graphs associated with one sensor
+//EG. GPS position + GPS velocity + GPS, acceleration
+struct SensorDataEntry
+{
+	DataSource Source;
+
+	std::map<DataAttachmentType, DataAttachment> Data;
+
+public:
+	SensorDataEntry(DataSource source, DataPointType type, double initalValue) : Source(source)
+	{		
+		Data[DataAttachmentType::VALUE].Type = type;
+		Data[DataAttachmentType::VALUE].Points.emplace_back(initalValue);
+	}
+
+	//1 means first integral, -1 means first deritive, -2 means 2nd deritive etc.
+	void AddAttachment(std::uint8_t integral)
+	{
+		
+	}
+
+
+	inline bool HasAttachment(DataAttachmentType attachment) const { return Data.find(attachment) != Data.end(); }
+
+	inline MKSUnit Units() { return GetUnitsFromType(Data[DataAttachmentType::VALUE].Type);  }
+
+};
+
+
+struct DataEntry
+{
+
+};
+
+
+
