@@ -1,5 +1,7 @@
 #include "MainLayer.h"
 
+#include <imgui.h>
+
 void MainLayer::OnAttach()
 {
 }
@@ -22,6 +24,7 @@ void MainLayer::Render()
 
 void MainLayer::OnImGuiRender()
 {
+	//ImGui::PlotLines()
 }
 
 MainLayer::~MainLayer()
