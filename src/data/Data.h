@@ -105,7 +105,15 @@ public:
 	//1 means first integral, -1 means first deritive, -2 means 2nd deritive etc.
 	void AddAttachment(std::uint8_t integral)
 	{
-		
+		DataAttachmentType type;
+		switch (integral)
+		{
+			case  0: type = DataAttachmentType::VALUE; 		break;
+			case  1: type = DataAttachmentType::INTEGRAL; 	break;
+			case  2: type = DataAttachmentType::INTEGRAL2; 	break;
+			case -1: type = DataAttachmentType::DERITIVE; 	break;
+			case -2: type = DataAttachmentType::DERITIVE2; 	break;
+		}
 	}
 
 
@@ -115,11 +123,6 @@ public:
 
 };
 
-
-struct DataEntry
-{
-
-};
 
 
 
