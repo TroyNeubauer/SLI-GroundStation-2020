@@ -25,6 +25,9 @@ void MainLayer::Render()
 void MainLayer::OnImGuiRender()
 {
 	//ImGui::PlotLines()
+	ImGui::Begin("Test");
+	ImGui::Button("test2");
+	ImGui::End();
 }
 
 MainLayer::~MainLayer()

@@ -5,6 +5,7 @@
 
 class MainLayer : public Hazel::Layer
 {
+public:
 	MainLayer() : Hazel::Layer("MainLayer") {}
 
 	virtual void OnAttach();

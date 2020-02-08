@@ -1,5 +1,7 @@
 
 #include "GroundStation.h"
+#include "MainLayer.h"
+
 
 #ifndef GROUND_STATION_TEST//A seperate main() is provided by the Test project
 	#include <Hazel/Core/EntryPoint.h>
@@ -10,6 +12,9 @@ GroundStation::GroundStation()
 	GSTime::InitClock();
 
 	m_StartTime = GSTime::Now();
+
+	PushOverlay(new MainLayer());
+	PushOverlay(new Hazel::DebugLayer());
 }
 
 void GroundStation::Update(Hazel::Timestep ts)
@@ -18,6 +23,8 @@ void GroundStation::Update(Hazel::Timestep ts)
 
 void GroundStation::Render()
 {
+	Hazel::RenderCommand::SetClearColor(glm::vec4(1.0f, 0.0f, 1.0f, 1.0f));
+	Hazel::RenderCommand::Clear();
 }
 
 GroundStation::~GroundStation()
