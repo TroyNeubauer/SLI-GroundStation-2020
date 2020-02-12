@@ -17,6 +17,7 @@ project "GroundStation"
 	includedirs
 	{
 		"src/",
+		"vendor/NeoGPS/src",
 	}
 
 	HazelDependencies()
@@ -60,3 +61,20 @@ project "Test"
 	HazelDependencies()
 
 
+project "NeoGPS"
+	kind "StaticLib"
+	location "vendor/NeoGPS"
+
+	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
+	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
+
+	files
+	{
+		"vendor/NeoGPS/src/**.h",
+		"vendor/NeoGPS/src/**.cpp"
+	}
+
+	includedirs
+	{
+		"vendor/NeoGPS/src/",
+	}
