@@ -3,6 +3,8 @@ include "Hazel"
 hazelWorkspace("GroundStation")
 setupHazel()
 
+include "vendor/libusb"
+
 project "GroundStation"
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
@@ -17,9 +19,15 @@ project "GroundStation"
 	includedirs
 	{
 		"src/",
-		"vendor/NeoGPS/src",
 	}
 
+	sysincludedirs
+	{
+		"vendor/NeoGPS/src/",
+	}
+
+
+	LibUSBDependencies()
 	HazelDependencies()
 
 	filter "system:emscripten"
@@ -27,6 +35,7 @@ project "GroundStation"
 		{
 			"--preload-file assets"
 		}
+
 
 project "Test"
 	location "Test"
@@ -56,8 +65,10 @@ project "Test"
 	sysincludedirs
 	{
 		"Test/vendor/",
+		"vendor/NeoGPS/src/",
 	}
 
+	LibUSBDependencies()
 	HazelDependencies()
 
 

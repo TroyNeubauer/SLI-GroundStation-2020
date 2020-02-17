@@ -14,7 +14,7 @@ GroundStation::GroundStation()
 	m_StartTime = GSTime::Now();
 
 	PushOverlay(new MainLayer());
-	//PushOverlay(new Hazel::DebugLayer());
+	PushOverlay(new Hazel::DebugLayer());
 }
 
 void GroundStation::Update(Hazel::Timestep ts)

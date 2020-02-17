@@ -46,8 +46,7 @@ Print & operator<<( Print& outs, const NeoGPS::time_t& t )
 }
 */
 
-using namespace NeoGPS;
-
+namespace NeoGPS {
 
 bool time_t::parse(str_P s)
 {
@@ -209,4 +208,6 @@ uint16_t time_t::day_of_year() const
     epoch_weekday( compile_weekday );
     pivot_year   ( this_year.year );
   }
+
 #endif
+}

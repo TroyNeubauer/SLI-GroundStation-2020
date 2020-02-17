@@ -86,7 +86,6 @@ struct DataAttachment
 	std::vector<DataPoint> Points;
 };
 
-
 //Stores mutiple graphs associated with one sensor
 //EG. GPS position + GPS velocity + GPS, acceleration
 struct SensorDataEntry
@@ -103,7 +102,7 @@ public:
 	}
 
 	//1 means first integral, -1 means first deritive, -2 means 2nd deritive etc.
-	void AddAttachment(std::uint8_t integral)
+	void AddAttachment(std::int8_t integral)
 	{
 		DataAttachmentType type;
 		switch (integral)
