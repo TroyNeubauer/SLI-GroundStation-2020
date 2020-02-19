@@ -2,66 +2,35 @@
 
 #include <imgui.h>
 #include <Hazel.h>
-#include <libusb.h>
+#include <libusbp.hpp>
 
 #include "util/ImGuiConsole.h"
 
+int vendorID = 0x0403;
+int productID = 0x6001;
+
 void MainLayer::OnAttach()
 {
-	libusb_device **devs;
-	int r;
-	ssize_t cnt;
-	libusb_context* context;
-
-	r = libusb_init(&context);
-	if (r < 0)
-		return;
-
-	cnt = libusb_get_device_list(context, &devs);
-	if (cnt < 0){
-		libusb_exit(context);
-		return;
-	}
-
-	libusb_device *dev;
-	int i = 0, j = 0;
-	uint8_t path[8];
-
-	while ((dev = devs[i++]) != NULL) {
-		struct libusb_device_descriptor desc;
-		int r = libusb_get_device_descriptor(dev, &desc);
-		if (r != LIBUSB_SUCCESS) {
-			continue;
+	HZ_INFO("Pre devices");
+	for (libusbp::device& device : libusbp::list_connected_devices())
+	{
+		try
+		{
+			HZ_INFO("Device: VID: {}, PID: {}", device.get_vendor_id(), device.get_product_id(), device.get_serial_number());
+		}
+		catch (const std::exception& error)
+		{
+			HZ_ERROR("libusbp Error: {}", error.what());
 		}
 		
-		libusb_device_handle* handle;
-		r = libusb_open(dev, &handle);
-		if (r != LIBUSB_SUCCESS)
-		{
-			continue;
-		}
-
-		//XBee is: 0403:6001
-		unsigned char buf[512];
-		printf("VendorID:ProductID -> %02x:%02x (bus %d, device %d)", desc.idVendor, desc.idProduct, libusb_get_bus_number(dev), libusb_get_device_address(dev));
-
-		r = libusb_get_string_descriptor_ascii(handle, desc.idVendor, buf, sizeof(buf));
-		printf(", Vendor String: %s (returned %d)", buf, r);
-
-		r = libusb_get_string_descriptor_ascii(handle, desc.idProduct, buf, sizeof(buf));
-		printf(", Product String: %s (returned %d)", buf, r);
-
-		r = libusb_get_string_descriptor_ascii(handle, desc.iManufacturer, buf, sizeof(buf));
-		printf(", Manfacturer String: %s (returned %d)", buf, r);
-
-		libusb_close(handle);
-
-		printf("\n");
 	}
+	HZ_INFO("Post devices");
 
-	libusb_free_device_list(devs, 1);
+/*	libusbp::serial_port port(device, interface_number, composite);
+	std::string port_name = port.get_name();
+	std::cout << port_name << std::endl;
+*/
 
-	libusb_exit(context);
 }
 
 void MainLayer::OnDetach()

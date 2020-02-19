@@ -3,7 +3,7 @@ include "Hazel"
 hazelWorkspace("GroundStation")
 setupHazel()
 
-include "vendor/libusb"
+include "vendor/libusbp"
 
 project "GroundStation"
 
@@ -27,7 +27,7 @@ project "GroundStation"
 	}
 
 
-	LibUSBDependencies()
+	LibUSBPDependencies()
 	HazelDependencies()
 
 	filter "system:emscripten"
@@ -68,7 +68,7 @@ project "Test"
 		"vendor/NeoGPS/src/",
 	}
 
-	LibUSBDependencies()
+	LibUSBPDependencies()
 	HazelDependencies()
 
 

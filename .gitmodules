@@ -1,3 +1,6 @@
 [submodule "Hazel"]
 	path = Hazel
 	url = https://github.com/TroyNeubauer/Hazel.git
+[submodule "vendor/libusbp"]
+	path = vendor/libusbp
+	url = https://github.com/TroyNeubauer/libusbp.git
