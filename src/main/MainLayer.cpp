@@ -6,30 +6,41 @@
 
 #include "util/ImGuiConsole.h"
 
-int vendorID = 0x0403;
-int productID = 0x6001;
+int radioVID = 0x0403;//0x0403
+int radioPID = 0x6001;//0x6001
+
+int arduinoVID = 0x2341;//0x0403
+int arduinoPID = 0x0042;//0x6001
 
 void MainLayer::OnAttach()
 {
-	HZ_INFO("Pre devices");
-	for (libusbp::device& device : libusbp::list_connected_devices())
+	try
 	{
-		try
-		{
-			HZ_INFO("Device: VID: {}, PID: {}", device.get_vendor_id(), device.get_product_id(), device.get_serial_number());
-		}
-		catch (const std::exception& error)
-		{
-			HZ_ERROR("libusbp Error: {}", error.what());
-		}
-		
+		libusbp::device device = libusbp::find_device_with_vid_pid(radioVID, radioPID);
+		libusbp::serial_port port(device, 0, false);
+		HZ_INFO("Opened Radio serial port");
+		std::string port_name = port.get_name();
+		HZ_INFO("Radio Path: {}", port_name);
 	}
-	HZ_INFO("Post devices");
+	catch (const std::exception& error)
+	{
+		HZ_ERROR("libusbp Error: {}", error.what());
+	}
+	
+	try
+	{
+		libusbp::device device = libusbp::find_device_with_vid_pid(arduinoVID, arduinoPID);
+		libusbp::serial_port port(device, 0, false);
+		HZ_INFO("Opened Arduino serial port");
+		std::string port_name = port.get_name();
+		HZ_INFO("Arduino Path: {}", port_name);
+	}
+	catch (const std::exception & error)
+	{
+		HZ_ERROR("libusbp Error: {}", error.what());
+	}
 
-/*	libusbp::serial_port port(device, interface_number, composite);
-	std::string port_name = port.get_name();
-	std::cout << port_name << std::endl;
-*/
+
 
 }
 
