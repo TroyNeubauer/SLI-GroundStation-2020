@@ -1,3 +1,5 @@
+#include "gspch.h"
+
 #include <Hazel/Core/Core.h>
 #include <TUtil/Timer.h>
 

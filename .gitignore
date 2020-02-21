@@ -37,6 +37,7 @@ Test/
 **/*.vcxproj
 **/*.vcxproj.user
 **/*.vcxproj.filters
+**/obj/
 
 #make
 **/Makefile

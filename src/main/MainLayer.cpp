@@ -1,3 +1,4 @@
+#include "gspch.h"
 #include "MainLayer.h"
 
 #include <imgui.h>
@@ -14,32 +15,6 @@ int arduinoPID = 0x0042;//0x6001
 
 void MainLayer::OnAttach()
 {
-	try
-	{
-		libusbp::device device = libusbp::find_device_with_vid_pid(radioVID, radioPID);
-		libusbp::serial_port port(device, 0, false);
-		HZ_INFO("Opened Radio serial port");
-		std::string port_name = port.get_name();
-		HZ_INFO("Radio Path: {}", port_name);
-	}
-	catch (const std::exception& error)
-	{
-		HZ_ERROR("libusbp Error: {}", error.what());
-	}
-	
-	try
-	{
-		libusbp::device device = libusbp::find_device_with_vid_pid(arduinoVID, arduinoPID);
-		libusbp::serial_port port(device, 0, false);
-		HZ_INFO("Opened Arduino serial port");
-		std::string port_name = port.get_name();
-		HZ_INFO("Arduino Path: {}", port_name);
-	}
-	catch (const std::exception & error)
-	{
-		HZ_ERROR("libusbp Error: {}", error.what());
-	}
-
 
 
 }

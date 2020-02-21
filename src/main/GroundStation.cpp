@@ -1,7 +1,9 @@
+#include "gspch.h"
 
 #include "GroundStation.h"
-#include "MainLayer.h"
 
+#include "MainLayer.h"
+#include "util/SerialPort.h"
 
 #ifndef GROUND_STATION_TEST//A seperate main() is provided by the Test project
 	#include <Hazel/Core/EntryPoint.h>
@@ -10,6 +12,8 @@
 GroundStation::GroundStation()
 {
 	GSTime::InitClock();
+	SerialPort::GetPort().Init();
+
 
 	m_StartTime = GSTime::Now();
 
@@ -30,6 +34,7 @@ void GroundStation::Render()
 
 GroundStation::~GroundStation()
 {
+	SerialPort::GetPort().Close();
 }
 
 

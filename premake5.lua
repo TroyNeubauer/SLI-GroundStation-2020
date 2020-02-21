@@ -7,13 +7,15 @@ include "vendor/libusbp"
 
 project "GroundStation"
 
+
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
 
 	files
 	{
 		"src/**.h",
-		"src/**.cpp"
+		"src/**.cpp",
+		"vendor/SLI-2020/Core/src/*.cpp",
 	}
 
 	includedirs
@@ -24,6 +26,13 @@ project "GroundStation"
 	sysincludedirs
 	{
 		"vendor/NeoGPS/src/",
+		"vendor/EnumSerialPorts/",
+		"vendor/SLI-2020/Core/include/",
+	}
+
+	defines
+	{
+		"GS_USE_PCH",
 	}
 
 
@@ -35,6 +44,15 @@ project "GroundStation"
 		{
 			"--preload-file assets"
 		}
+
+	filter "system:macosx or system:windows or system:linux"
+		pchsource "src/gspch.cpp"
+	
+	filter "system:windows or system:linux"
+		pchheader "gspch.h"
+
+	filter "system:macosx"
+		pchheader "src/gspch.h"--Why XCode
 
 
 project "Test"
@@ -66,6 +84,7 @@ project "Test"
 	{
 		"Test/vendor/",
 		"vendor/NeoGPS/src/",
+		"vendor/EnumSerialPorts/",
 	}
 
 	LibUSBPDependencies()
@@ -89,3 +108,4 @@ project "NeoGPS"
 	{
 		"vendor/NeoGPS/src/",
 	}
+
