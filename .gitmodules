@@ -4,3 +4,6 @@
 [submodule "vendor/libusbp"]
 	path = vendor/libusbp
 	url = https://github.com/TroyNeubauer/libusbp.git
+[submodule "vendor/SLI-2020"]
+	path = vendor/SLI-2020
+	url = https://github.com/TroyNeubauer/SLI-2020.git
