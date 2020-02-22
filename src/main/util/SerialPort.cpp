@@ -12,7 +12,7 @@ std::unique_ptr<SerialPort> SerialPort::s_Instance;
 const uint16_t radioVID = 0x0403;
 const uint16_t radioPID = 0x6001;
 
-#ifdef HZ_PLATFORM_WINDOWS
+#if defined(HZ_PLATFORM_WINDOWS)
 
 #include <ctype.h>
 
@@ -122,13 +122,13 @@ void CleanUpPort()
 }
 
 
-#elif HZ_PLATFORM_UNIX
+#elif defined(HZ_PLATFORM_UNIX)
 
 int fd = -1;
 
 void OpenSerialPort(const std::string& portName)
 {
-
+	
 }
 
 bool IsPortOpen()
@@ -138,7 +138,7 @@ bool IsPortOpen()
 
 void CleanUpPort()
 {
-	CloseHandle(handle);
+	
 }
 
 

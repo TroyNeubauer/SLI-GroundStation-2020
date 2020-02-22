@@ -15,7 +15,6 @@ project "GroundStation"
 	{
 		"src/**.h",
 		"src/**.cpp",
-		"vendor/SLI-2020/Core/src/*.cpp",
 	}
 
 	includedirs
@@ -85,6 +84,7 @@ project "Test"
 		"Test/vendor/",
 		"vendor/NeoGPS/src/",
 		"vendor/EnumSerialPorts/",
+		"vendor/SLI-2020/Core/include/",
 	}
 
 	LibUSBPDependencies()
@@ -107,5 +107,24 @@ project "NeoGPS"
 	includedirs
 	{
 		"vendor/NeoGPS/src/",
+	}
+
+project "SLICore"
+	kind "StaticLib"
+	location "vendor/SLI-2020"
+
+	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
+	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
+
+	
+	files
+	{
+		"vendor/SLI-2020/Core/src/*.cpp",
+	}
+		
+	includedirs
+	{
+		"vendor/SLI-2020/Core/include/",
+
 	}
 
