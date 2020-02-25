@@ -3,23 +3,22 @@
 #include <memory>
 #include <thread>
 
+class MainLayer;
+
 class SerialPort
 {
 public:
-	SerialPort();
+	SerialPort(MainLayer& layer);
 	inline bool IsRunning() const { return m_Running; }
 	void Close();
+	MainLayer& GetMainLayer() { return m_Layer; }
 
-	//Nop. Ensures an instance exists;
-	inline void Init() const {}
+	bool Read(void* dest, std::size_t bytes);
+	bool Write(void* src, std::size_t bytes);
 
 private:
 	bool m_Running = true;
 	std::thread m_Thread;
+	MainLayer& m_Layer;
 
-public:
-	static SerialPort& GetPort();
-
-private:
-	static std::unique_ptr<SerialPort> s_Instance;
 };

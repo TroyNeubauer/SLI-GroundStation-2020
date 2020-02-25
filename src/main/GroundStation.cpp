@@ -12,7 +12,6 @@
 GroundStation::GroundStation()
 {
 	GSTime::InitClock();
-	SerialPort::GetPort().Init();
 
 
 	m_StartTime = GSTime::Now();
@@ -34,7 +33,7 @@ void GroundStation::Render()
 
 GroundStation::~GroundStation()
 {
-	SerialPort::GetPort().Close();
+	
 }
 
 

@@ -6,6 +6,7 @@
 #include <libusbp.hpp>
 
 #include "util/ImGuiConsole.h"
+#include "main/util/SerialPort.h"
 
 int radioVID = 0x0403;//0x0403
 int radioPID = 0x6001;//0x6001
@@ -15,6 +16,7 @@ int arduinoPID = 0x0042;//0x6001
 
 void MainLayer::OnAttach()
 {
+	m_Port = new SerialPort(*this);
 
 
 }

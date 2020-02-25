@@ -34,6 +34,11 @@ project "GroundStation"
 		"GS_USE_PCH",
 	}
 
+	links
+	{
+		"SLICore",
+	}
+
 
 	LibUSBPDependencies()
 	HazelDependencies()
@@ -87,6 +92,11 @@ project "Test"
 		"vendor/SLI-2020/Core/include/",
 	}
 
+	links
+	{
+		"SLICore",
+	}
+
 	LibUSBPDependencies()
 	HazelDependencies()
 
@@ -119,12 +129,15 @@ project "SLICore"
 	
 	files
 	{
-		"vendor/SLI-2020/Core/src/*.cpp",
+		"vendor/SLI-2020/Core/src/**.cpp",
 	}
 		
 	includedirs
 	{
 		"vendor/SLI-2020/Core/include/",
-
+		"src",
 	}
+
+	HazelIncludes()
+
 

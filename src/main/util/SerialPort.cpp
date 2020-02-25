@@ -1,13 +1,14 @@
 #include "gspch.h"
 
 #include "SerialPort.h"
+#include "main/MainLayer.h"
+#include "Module.h"
+#include "data/Decoder.h"
 
 #include <stdio.h>
 
 #include <libusbp.hpp>
 #include <Hazel.h>
-
-std::unique_ptr<SerialPort> SerialPort::s_Instance;
 
 const uint16_t radioVID = 0x0403;
 const uint16_t radioPID = 0x6001;
@@ -18,7 +19,7 @@ const uint16_t radioPID = 0x6001;
 
 HANDLE handle = INVALID_HANDLE_VALUE;
 
-void OpenSerialPort(const std::string& portName)
+void OpenSerialPort(const std::string& portName, SerialPort* port)
 {
 	std::string fullName = "\\\\.\\";
 	fullName += portName;
@@ -31,7 +32,7 @@ void OpenSerialPort(const std::string& portName)
 		NULL);
 }
 
-bool GetWindowsPortName(std::string& portName)
+bool GetWindowsPortName(std::string& portName, SerialPort* port)
 {
 	std::vector<int> ports;
 
@@ -107,11 +108,21 @@ bool GetWindowsPortName(std::string& portName)
 			HZ_WARN("\tCOM{}", id);
 		}
 	}
+	port->GetMainLayer().Data.SerialPortStatus = MainData::SerialPortStatusEnum::CANNOT_FIND_VID;
 
 	return false;
 }
 
-bool IsPortOpen()
+bool SerialPort::Read(void* dest, std::size_t bytes)
+{
+	return false;
+}
+bool SerialPort::Write(void* buf, std::size_t bytes)
+{
+	return false;
+}
+
+bool IsPortOpen(SerialPort* port)
 {
 	return handle != INVALID_HANDLE_VALUE;
 }
@@ -126,12 +137,35 @@ void CleanUpPort()
 
 int fd = -1;
 
-void OpenSerialPort(const std::string& portName)
+void OpenSerialPort(const std::string& portName, SerialPort* port)
 {
-	
+	fd = open(portName.c_str(), O_RDWR);
 }
 
-bool IsPortOpen()
+
+bool SerialPort::Read(void* dest, std::size_t bytes)
+{
+	ssize_t bytesRead = read(fd, dest, bytes);
+	if (bytesRead <= 0)
+	{
+		GetMainLayer().Data.SerialPortStatus = MainData::SerialPortStatusEnum::PORT_ERROR;
+		close(fd);
+		fd = -1;
+		return false;
+	}
+	else
+	{
+		return true;
+	}
+
+}
+
+bool SerialPort::Write(void* buf, std::size_t bytes)
+{
+	return false;
+}
+
+bool IsPortOpen(SerialPort* port)
 {
 	return fd != -1;
 }
@@ -147,23 +181,32 @@ void CleanUpPort()
 	#error Unknown platform
 #endif
 
-bool GetPortName(std::string& portName)
+bool GetPortName(std::string& portName, SerialPort* port)
 {
+
 	try
 	{
 		libusbp::device device = libusbp::find_device_with_vid_pid(radioVID, radioPID);
-		if (device.pointer_get() == nullptr) return false;
-		HZ_INFO("XBee USB Radio module detected");
+		if (device.pointer_get() == nullptr)
+		{
+			port->GetMainLayer().Data.SerialPortStatus = MainData::SerialPortStatusEnum::CANNOT_FIND_VID;
+			return false;
+		}
 #ifdef HZ_PLATFORM_WINDOWS
 		return GetWindowsPortName(portName);
 #else
+		HZ_INFO("About to open XBee on unix. Serial number: {}", device.get_serial_number());
 		libusbp::serial_port port(device, 0, false);
 		portName = port.get_name();
+		HZ_INFO("Found XBee on unix port {}", portName);
+
 		return true;
 #endif
 	}
-	catch (const std::exception & error)
+	catch (const std::exception& error)
 	{
+		port->GetMainLayer().Data.SerialPortStatus = MainData::SerialPortStatusEnum::PORT_ERROR;
+
 		HZ_ERROR("libusbp Error: {}", error.what());
 		return false;
 	}
@@ -171,16 +214,18 @@ bool GetPortName(std::string& portName)
 
 void SerialPortLoop(SerialPort* port)
 {
+
+	HZ_INFO("Starting Serial Port thread");
 	while (port->IsRunning())
 	{
-		if (!IsPortOpen())
+		if (!IsPortOpen(port))
 		{
 			//No serial port yet
 			std::string portName;
-			if (GetPortName(portName))
+			if (GetPortName(portName, port))
 			{
 				//We found the radio's port name
-				OpenSerialPort(portName);
+				OpenSerialPort(portName, port);
 			}
 			else
 			{
@@ -192,16 +237,17 @@ void SerialPortLoop(SerialPort* port)
 		else
 		{
 			//We are connected to the serial port
-
-
+			PacketHeader header;
+			port->Read(&header, sizeof(header));
+			Decoder::HandlePacket(header, *port);
 		}
 	}
 }
 
 
-SerialPort::SerialPort() : m_Thread(SerialPortLoop, this)
+SerialPort::SerialPort(MainLayer& layer) : m_Thread(SerialPortLoop, this), m_Layer(layer)
 {
-	
+
 }
 
 void SerialPort::Close()
@@ -209,15 +255,5 @@ void SerialPort::Close()
 	m_Running = true;
 	CleanUpPort();
 	m_Thread.join();
-}
-
-
-SerialPort& SerialPort::GetPort()
-{
-	if (!s_Instance)
-	{
-		s_Instance.reset(new SerialPort());
-	}
-	return *s_Instance.get();
 }
 

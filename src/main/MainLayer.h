@@ -2,6 +2,20 @@
 
 #include <Hazel.h>
 
+class SerialPort;
+
+struct MainData
+{
+	enum class SerialPortStatusEnum
+	{
+		CANNOT_FIND_VID, MUTIPLE_DETECTED, PORT_OPEN, PORT_ERROR
+	};
+
+	SerialPortStatusEnum SerialPortStatus;
+
+
+
+};
 
 class MainLayer : public Hazel::Layer
 {
@@ -15,6 +29,11 @@ public:
 	virtual void Render();
 	virtual void OnImGuiRender();
 	virtual ~MainLayer();
+
+	MainData Data;
+
+private:
+	SerialPort* m_Port = nullptr;
 
 
 };
