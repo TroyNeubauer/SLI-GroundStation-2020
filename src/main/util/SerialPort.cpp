@@ -2,7 +2,7 @@
 
 #include "SerialPort.h"
 #include "main/MainLayer.h"
-#include "Module.h"
+#include "Packet.h"
 #include "data/Decoder.h"
 
 #include <stdio.h>
@@ -145,8 +145,10 @@ void OpenSerialPort(const std::string& portName, SerialPort* port)
 
 bool SerialPort::Read(void* dest, std::size_t bytes)
 {
+	if (fd == -1) return false;
+
 	ssize_t bytesRead = read(fd, dest, bytes);
-	if (bytesRead <= 0)
+	if (bytesRead != bytes)
 	{
 		GetMainLayer().Data.SerialPortStatus = MainData::SerialPortStatusEnum::PORT_ERROR;
 		close(fd);
@@ -162,7 +164,20 @@ bool SerialPort::Read(void* dest, std::size_t bytes)
 
 bool SerialPort::Write(void* buf, std::size_t bytes)
 {
-	return false;
+	if (fd == -1) return false;
+
+	ssize_t bytesWritten = write(fd, buf, bytes);
+	if (bytesWritten != bytes)
+	{
+		GetMainLayer().Data.SerialPortStatus = MainData::SerialPortStatusEnum::PORT_ERROR;
+		close(fd);
+		fd = -1;
+		return false;
+	}
+	else
+	{
+		return true;
+	}
 }
 
 bool IsPortOpen(SerialPort* port)
@@ -172,7 +187,7 @@ bool IsPortOpen(SerialPort* port)
 
 void CleanUpPort()
 {
-	
+	close(fd);
 }
 
 

@@ -27,6 +27,7 @@ project "GroundStation"
 		"vendor/NeoGPS/src/",
 		"vendor/EnumSerialPorts/",
 		"vendor/SLI-2020/Core/include/",
+		"vendor/CRC32",
 	}
 
 	defines
@@ -90,6 +91,7 @@ project "Test"
 		"vendor/NeoGPS/src/",
 		"vendor/EnumSerialPorts/",
 		"vendor/SLI-2020/Core/include/",
+		"vendor/CRC32",
 	}
 
 	links
