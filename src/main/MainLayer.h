@@ -2,6 +2,8 @@
 
 #include <Hazel.h>
 
+#include "Module.h"
+
 class SerialPort;
 
 struct MainData
@@ -34,6 +36,7 @@ public:
 
 private:
 	SerialPort* m_Port = nullptr;
+	SLICoreModule* m_GroundStation;
 
 
 };

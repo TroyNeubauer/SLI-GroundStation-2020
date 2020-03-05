@@ -4,7 +4,14 @@
 
 class GroundStationModule : public SLICoreModule
 {
-	GroundStationModule();
-};
+public:
+	GroundStationModule() : SLICoreModule(ModuleID::GROUND_STATION) {}
 
-void SerialPrint(Formatter& formatter);
+	virtual void Update();
+
+	virtual ~GroundStationModule() {}
+
+private:
+	virtual void RoutePacket(const PacketHeader& header, Buffer& packet);
+
+};

@@ -2,11 +2,6 @@ language: cpp
 
 matrix:
   include:
-    #Linux - Emscripten
-    - os: linux
-      env:
-        - BUILD_CONFIG=dist
-        - COMPILER=emcc
     # Windows:
     - os: windows
       env:

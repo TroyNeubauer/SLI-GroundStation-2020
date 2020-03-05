@@ -135,11 +135,58 @@ void CleanUpPort()
 
 #elif defined(HZ_PLATFORM_UNIX)
 
+#include <stdio.h>      // standard input / output functions
+#include <stdlib.h>
+#include <string.h>     // string function definitions
+#include <unistd.h>     // UNIX standard function definitions
+#include <fcntl.h>      // File control definitions
+#include <errno.h>      // Error number definitions
+#include <termios.h>    // POSIX terminal control definitions
+
 int fd = -1;
 
 void OpenSerialPort(const std::string& portName, SerialPort* port)
 {
-	fd = open(portName.c_str(), O_RDWR);
+	fd = open(portName.c_str(), O_RDWR| O_NOCTTY | O_NDELAY);
+		
+	struct termios serialPortSettings;	/* Create the structure                          */
+
+	
+	tcgetattr(fd, &serialPortSettings);	/* Get the current attributes of the Serial port */
+
+	/* Setting the Baud rate */
+	cfsetispeed(&serialPortSettings, B1152000); /* Set Read  Speed as 9600                       */
+	cfsetospeed(&serialPortSettings, B1152000); /* Set Write Speed as 9600                       */
+
+	/* 8N1 Mode */
+	serialPortSettings.c_cflag &= ~PARENB;   /* Disables the Parity Enable bit(PARENB),So No Parity   */
+	serialPortSettings.c_cflag &= ~CSTOPB;   /* CSTOPB = 2 Stop bits,here it is cleared so 1 Stop bit */
+	serialPortSettings.c_cflag &= ~CSIZE;	 /* Clears the mask for setting the data size             */
+	serialPortSettings.c_cflag |=  CS8;      /* Set the data bits = 8                                 */
+	
+	serialPortSettings.c_cflag &= ~CRTSCTS;       /* No Hardware flow Control                         */
+	serialPortSettings.c_cflag |= CREAD | CLOCAL; /* Enable receiver,Ignore Modem Control lines       */ 
+	
+	
+	serialPortSettings.c_iflag &= ~(IXON | IXOFF | IXANY);          /* Disable XON/XOFF flow control both i/p and o/p */
+	serialPortSettings.c_iflag &= ~(ICANON | ECHO | ECHOE | ISIG);  /* Non Cannonical mode                            */
+
+	serialPortSettings.c_oflag &= ~OPOST;/*No Output Processing*/
+	
+	/* Setting Time outs */
+	serialPortSettings.c_cc[VMIN] = 10; /* Read at least 10 characters */
+	serialPortSettings.c_cc[VTIME] = 0; /* Wait indefinetly   */
+
+
+	if((tcsetattr(fd, TCSANOW, &serialPortSettings)) != 0) /* Set the attributes to the termios structure*/
+		HZ_ERROR("ERROR ! in Setting attributes");
+	else
+		HZ_INFO("BaudRate = 115200, StopBits = 1, Parity = none");
+		
+		/*------------------------------- Read data from serial port -----------------------------*/
+
+	tcflush(fd, TCIFLUSH);   /* Discards old data in the rx buffer            */
+
 }
 
 

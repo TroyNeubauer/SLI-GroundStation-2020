@@ -17,7 +17,7 @@ int arduinoPID = 0x0042;//0x6001
 void MainLayer::OnAttach()
 {
 	m_Port = new SerialPort(*this);
-
+	m_GroundStation = GetDefaultCoreModule();
 
 }
 
