@@ -137,9 +137,8 @@ project "SLICore"
 	includedirs
 	{
 		"vendor/SLI-2020/Core/include/",
-		"src",
+		"src/",--For the PCH
 	}
 
 	HazelIncludes()
-
 

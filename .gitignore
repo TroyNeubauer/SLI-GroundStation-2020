@@ -34,9 +34,7 @@ Test/
 
 #MSVC
 **/*.sln
-**/*.vcxproj
-**/*.vcxproj.user
-**/*.vcxproj.filters
+**/*.vcxproj*
 **/obj/
 
 #make
