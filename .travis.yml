@@ -61,6 +61,7 @@ addons:
       - libghc-bzlib-dev
       - lzma-dev
       - libroslz4-dev
+      - libudev-dev
 
 install:
   - |

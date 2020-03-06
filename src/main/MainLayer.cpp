@@ -6,11 +6,8 @@
 #include <libusbp.hpp>
 
 #include "util/ImGuiConsole.h"
-<<<<<<< Updated upstream
 #include "util/SerialPort.h"
-=======
-#include "main/util/SerialPort.h"
->>>>>>> Stashed changes
+
 
 int radioVID = 0x0403;//0x0403
 int radioPID = 0x6001;//0x6001
