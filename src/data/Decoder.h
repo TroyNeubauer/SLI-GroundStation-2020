@@ -1,11 +1,13 @@
 #pragma once
 
-class PacketHeader;
 class SerialPort;
+
+#include "Buffer.h"
 
 class Decoder
 {
 public:
-	static void HandlePacket(PacketHeader& header, SerialPort& port);
+	static void Handle(StackBuffer<4096>& buf, SerialPort& port);
+
 };
 

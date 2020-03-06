@@ -13,6 +13,8 @@
 const uint16_t radioVID = 0x0403;
 const uint16_t radioPID = 0x6001;
 
+const uint32_t BAUD_RATE = 115200;
+
 #if defined(HZ_PLATFORM_WINDOWS)
 
 #include <ctype.h>
@@ -30,6 +32,48 @@ void OpenSerialPort(const std::string& portName, SerialPort* port)
 		OPEN_EXISTING,                // Open existing port only
 		0,                            // Non Overlapped I/O
 		NULL);
+
+	if (handle == INVALID_HANDLE_VALUE)
+	{
+		HZ_ERROR("Failed to open serial port!");
+		return;
+	}
+
+	DCB dcbConfig;
+
+	if (GetCommState(handle, &dcbConfig))
+	{
+		dcbConfig.BaudRate = BAUD_RATE;
+		dcbConfig.ByteSize = 8;
+		dcbConfig.Parity = NOPARITY;
+		dcbConfig.StopBits = ONESTOPBIT;
+		dcbConfig.fBinary = TRUE;
+		dcbConfig.fParity = TRUE;
+	}
+
+	else
+	{
+		HZ_ERROR("GetCommState Failed!");
+		return;
+	}
+	if (!SetCommState(handle, &dcbConfig))
+	{
+		HZ_ERROR("SetCommState Failed!");
+		return;
+	}
+	
+	//Disable timeouts
+	COMMTIMEOUTS timeouts;
+	timeouts.ReadIntervalTimeout = 0;
+	timeouts.ReadTotalTimeoutMultiplier = 0;
+	timeouts.ReadTotalTimeoutConstant = 0;
+	timeouts.WriteTotalTimeoutMultiplier = 0;
+	timeouts.WriteTotalTimeoutConstant = 0;
+	if (!SetCommTimeouts(handle, &timeouts))
+	{
+		HZ_ERROR("SetCommTimeouts Failed!");
+		return;
+	}
 }
 
 bool GetWindowsPortName(std::string& portName, SerialPort* port)
@@ -115,12 +159,27 @@ bool GetWindowsPortName(std::string& portName, SerialPort* port)
 
 bool SerialPort::Read(void* dest, std::size_t bytes)
 {
-	return false;
+	if (handle == INVALID_HANDLE_VALUE) return false;
+
+	DWORD bytesRead;
+	if (!ReadFile(handle, dest, bytes, &bytesRead, nullptr) || (bytesRead != bytes))
+	{
+		GetMainLayer().Data.SerialPortStatus = MainData::SerialPortStatusEnum::PORT_ERROR;
+		CloseHandle(handle);
+		handle = INVALID_HANDLE_VALUE;
+		return false;
+	}
+	else
+	{
+		return true;
+	}
 }
+
 bool SerialPort::Write(void* buf, std::size_t bytes)
 {
 	return false;
 }
+
 
 bool IsPortOpen(SerialPort* port)
 {
@@ -130,6 +189,13 @@ bool IsPortOpen(SerialPort* port)
 void CleanUpPort()
 {
 	CloseHandle(handle);
+	handle = INVALID_HANDLE_VALUE;
+}
+
+void DiscardRXBuffer()
+{
+	PurgeComm(handle, PURGE_RXCLEAR);
+	HZ_INFO("Clearing serial port buffer to clense corrupt packet");
 }
 
 
@@ -189,6 +255,12 @@ void OpenSerialPort(const std::string& portName, SerialPort* port)
 
 }
 
+void DiscardRXBuffer()
+{
+	tcflush(fd, TCIFLUSH);
+	HZ_INFO("Clearing serial port buffer to clense corrupt packet");
+}
+
 
 bool SerialPort::Read(void* dest, std::size_t bytes)
 {
@@ -235,6 +307,7 @@ bool IsPortOpen(SerialPort* port)
 void CleanUpPort()
 {
 	close(fd);
+	fd = -1;
 }
 
 
@@ -255,7 +328,7 @@ bool GetPortName(std::string& portName, SerialPort* port)
 			return false;
 		}
 #ifdef HZ_PLATFORM_WINDOWS
-		return GetWindowsPortName(portName);
+		return GetWindowsPortName(portName, port);
 #else
 		HZ_INFO("About to open XBee on unix. Serial number: {}", device.get_serial_number());
 		libusbp::serial_port port(device, 0, false);
@@ -298,12 +371,40 @@ void SerialPortLoop(SerialPort* port)
 		}
 		else
 		{
+
 			//We are connected to the serial port
-			PacketHeader header;
-			port->Read(&header, sizeof(header));
-			Decoder::HandlePacket(header, *port);
+			StackBuffer<4096> buf;
+			PacketHeader* header = buf.Header();
+			port->Read(header, sizeof(PacketHeader));
+			Decoder::Handle(buf, *port);
+
+			constexpr int x = sizeof(PacketHeader);
+
 		}
 	}
+}
+
+void SerialPort::InvalidPacket(const InvalidPacketData& data, InvalidPacketError error)
+{
+	DiscardRXBuffer();
+	if (error == InvalidPacketError::INVALID_CHECKSUM)
+	{
+		HZ_WARN("Corrupt packet recieved! Expected checksum 0x{:x} but got 0x{:x}", data.InvalidChecksum.ExpectedCRC, data.InvalidChecksum.ActualCRC);
+	}
+	else
+	{
+		const char* info;
+		switch (error)
+		{
+			case InvalidPacketError::INVALID_MAGIC: info = "Invalid Magic"; break;
+			case InvalidPacketError::INVALID_PACKET_TYPE: info = "Invalid Packet Type"; break;
+			case InvalidPacketError::INVALID_LENGTH: info = "Invalid Length, too large";
+			default: info = "Unspecified problem"; break;
+		}
+		HZ_WARN("Corrupt packet recieved! ({}) Valud is wrong at offset {}, value is: 0x{:x}", info, data.InvalidValue.Offset, data.InvalidValue.InvalidValue);
+
+	}
+
 }
 
 
@@ -314,7 +415,7 @@ SerialPort::SerialPort(MainLayer& layer) : m_Thread(SerialPortLoop, this), m_Lay
 
 void SerialPort::Close()
 {
-	m_Running = true;
+	m_Running = false;
 	CleanUpPort();
 	m_Thread.join();
 }
