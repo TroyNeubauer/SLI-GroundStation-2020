@@ -21,6 +21,12 @@ bool VerifyCRC32(StackBuffer<4096>& buf, SerialPort& port)
 
 void Decoder::Handle(StackBuffer<4096>& buf, SerialPort& port)
 {
+	static FILE* errors = nullptr;
+	if (errors == nullptr)
+	{
+		errors = fopen("Errors.dat", "wb");
+	}
+
 	PacketHeader* header = buf.Header();
 	switch (header->Type)
 	{
@@ -77,6 +83,12 @@ void Decoder::Handle(StackBuffer<4096>& buf, SerialPort& port)
 		}
 		default:
 		{
+			char errorChars[32];
+			std::fill(errorChars, errorChars + sizeof(errorChars), 0x00);
+			fwrite(errorChars, 1, sizeof(errorChars), errors);
+			fwrite(buf.Begin(), 1, buf.Offset(), errors);
+			fflush(errors);
+
 			InvalidPacketData data;
 			data.InvalidValue.Offset = offsetof(PacketHeader, Type);
 			data.InvalidValue.InvalidValue = header->Type;
