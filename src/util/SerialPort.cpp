@@ -373,23 +373,43 @@ void SerialPortLoop(SerialPort* port)
 		{
 
 			//We are connected to the serial port
+			uint8_t byte;
+			int magicCount = 0;
+			int missedBytes = 0;
+			while (magicCount != sizeof(uint32_t))
+			{
+				port->Read(&byte, sizeof(byte));
+				if (byte == MAGIC_VALUE)
+				{
+					magicCount++;
+				}
+				else
+				{
+					magicCount = 0;
+					missedBytes++;
+				}
+			}
+
 			StackBuffer<4096> buf;
 			PacketHeader* header = buf.Header();
 			port->Read(header, sizeof(PacketHeader));
 			Decoder::Handle(buf, *port);
 
-			constexpr int x = sizeof(PacketHeader);
-
 		}
 	}
+	HZ_INFO("Serial Port thread exiting");
 }
 
-void SerialPort::InvalidPacket(const InvalidPacketData& data, InvalidPacketError error)
+void SerialPort::InvalidPacket(InvalidPacketData& data, InvalidPacketError error)
 {
 	DiscardRXBuffer();
 	if (error == InvalidPacketError::INVALID_CHECKSUM)
 	{
 		HZ_WARN("Corrupt packet recieved! Expected checksum 0x{:x} but got 0x{:x}", data.InvalidChecksum.ExpectedCRC, data.InvalidChecksum.ActualCRC);
+	}
+	else if (error == InvalidPacketError::UNKNOWN_PACKET)
+	{
+		HZ_WARN("Unknown packet: {}", data.Information.c_str());
 	}
 	else
 	{
@@ -401,7 +421,7 @@ void SerialPort::InvalidPacket(const InvalidPacketData& data, InvalidPacketError
 			case InvalidPacketError::INVALID_LENGTH: info = "Invalid Length, too large";
 			default: info = "Unspecified problem"; break;
 		}
-		HZ_WARN("Corrupt packet recieved! ({}) Valud is wrong at offset {}, value is: 0x{:x}", info, data.InvalidValue.Offset, data.InvalidValue.InvalidValue);
+		HZ_WARN("Invalid recieved! ({}) Valud is wrong at offset {}, value is: 0x{:x}", info, data.InvalidValue.Offset, data.InvalidValue.InvalidValue);
 
 	}
 

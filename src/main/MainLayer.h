@@ -10,12 +10,10 @@ struct MainData
 {
 	enum class SerialPortStatusEnum
 	{
-		CANNOT_FIND_VID, MUTIPLE_DETECTED, PORT_OPEN, PORT_ERROR
+		OK, CANNOT_FIND_VID, MUTIPLE_DETECTED, PORT_OPEN, PORT_ERROR
 	};
 
-	SerialPortStatusEnum SerialPortStatus;
-
-
+	SerialPortStatusEnum SerialPortStatus = SerialPortStatusEnum::OK;
 
 };
 
@@ -31,6 +29,8 @@ public:
 	virtual void Render();
 	virtual void OnImGuiRender();
 	virtual ~MainLayer();
+
+	void HandleGPS(const std::string& sentence);
 
 	MainData Data;
 

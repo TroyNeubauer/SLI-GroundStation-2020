@@ -3,6 +3,7 @@
 
 #include "Packet.h"
 #include "util/SerialPort.h"
+#include "main/MainLayer.h"
 #include "Module.h"
 
 bool VerifyCRC32(StackBuffer<4096>& buf, SerialPort& port)
@@ -28,6 +29,30 @@ void Decoder::Handle(StackBuffer<4096>& buf, SerialPort& port)
 	}
 
 	PacketHeader* header = buf.Header();
+	if (header->Destination >= ModuleID::MAX_MODULE_ID)
+	{
+		InvalidPacketData data;
+		data.InvalidValue.Offset = offsetof(PacketHeader, Destination);
+		data.InvalidValue.InvalidValue = header->Destination;
+		port.InvalidPacket(data, InvalidPacketError::INVALID_ADDRESS);
+		return;
+	}
+	else if (header->From >= ModuleID::MAX_MODULE_ID)
+	{
+		InvalidPacketData data;
+		data.InvalidValue.Offset = offsetof(PacketHeader, From);
+		data.InvalidValue.InvalidValue = header->From;
+		port.InvalidPacket(data, InvalidPacketError::INVALID_ADDRESS);
+		return;
+	}
+	else if (header->Forwarder >= ModuleID::MAX_MODULE_ID)
+	{
+		InvalidPacketData data;
+		data.InvalidValue.Offset = offsetof(PacketHeader, Forwarder);
+		data.InvalidValue.InvalidValue = header->Forwarder;
+		port.InvalidPacket(data, InvalidPacketError::INVALID_ADDRESS);
+		return;
+	}
 	switch (header->Type)
 	{
 		case PacketType::INIT:
@@ -42,8 +67,37 @@ void Decoder::Handle(StackBuffer<4096>& buf, SerialPort& port)
 		}
 		case PacketType::DATA:
 		{
+			switch (header->From)
+			{
+				case ModuleID::GPS:
+				{
+					DataPacket_GPS* dataPacket = buf.Ptr<DataPacket_GPS>();
+					port.Read(dataPacket, sizeof(DataPacket_GPS));
+					if (dataPacket->NMEASentenceLength > 5 * MAX_NMEA_LENGTH)
+					{
+						InvalidPacketData data;
+						data.InvalidValue.Offset = sizeof(PacketHeader) + offsetof(DataPacket_GPS, NMEASentenceLength);
+						data.InvalidValue.InvalidValue = dataPacket->NMEASentenceLength;
+						port.InvalidPacket(data, InvalidPacketError::INVALID_LENGTH);
+						return;
+					}
+					char* nmeaSentenceRaw = buf.As<char>(dataPacket->NMEASentenceLength);
+					port.Read(nmeaSentenceRaw, dataPacket->NMEASentenceLength);
+					if (!VerifyCRC32(buf, port)) return;
 
-			return;
+					std::string nmeaSentence(nmeaSentenceRaw, dataPacket->NMEASentenceLength);
+					port.GetMainLayer().HandleGPS(nmeaSentence);
+					return;
+				}
+				default:
+				{
+					InvalidPacketData data;
+					data.Information << "Unknown data packet for destination: " << GetModuleIDName(header->From);
+					port.InvalidPacket(data, InvalidPacketError::UNKNOWN_PACKET);
+
+					return;
+				}
+			}
 		}
 		case PacketType::MESSAGE:
 		{
@@ -83,9 +137,9 @@ void Decoder::Handle(StackBuffer<4096>& buf, SerialPort& port)
 		}
 		default:
 		{
-			char errorChars[32];
-			std::fill(errorChars, errorChars + sizeof(errorChars), 0x00);
-			fwrite(errorChars, 1, sizeof(errorChars), errors);
+			std::array<uint16_t, 8> errorChars;
+			std::fill(errorChars.begin(), errorChars.end(), 0xFF00);
+			fwrite(errorChars.data(), 1, sizeof(errorChars), errors);
 			fwrite(buf.Begin(), 1, buf.Offset(), errors);
 			fflush(errors);
 

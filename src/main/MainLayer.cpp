@@ -84,3 +84,8 @@ void MainLayer::OnImGuiRender()
 MainLayer::~MainLayer()
 {
 }
+
+void MainLayer::HandleGPS(const std::string& sentence)
+{
+	HZ_INFO("GPS: {}", sentence);
+}
