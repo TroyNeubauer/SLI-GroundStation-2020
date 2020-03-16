@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Hazel.h>
+#include <future>
 
 #include "Module.h"
 
@@ -31,6 +32,7 @@ public:
 	virtual ~MainLayer();
 
 	void HandleGPS(const std::string& sentence);
+	void OpenDialog(const std::vector<std::string>& options, std::promise<std::string>* promise);
 
 	MainData Data;
 

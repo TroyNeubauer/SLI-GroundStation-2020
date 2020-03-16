@@ -6,20 +6,6 @@
 #include "main/MainLayer.h"
 #include "Module.h"
 
-bool VerifyCRC32(StackBuffer<4096>& buf, SerialPort& port)
-{
-	uint32_t crc = buf.CalculateCRC32();
-	if (buf.Header()->CRC32 != crc)
-	{
-		InvalidPacketData data;
-		data.InvalidChecksum.ExpectedCRC = crc;
-		data.InvalidChecksum.ActualCRC = buf.Header()->CRC32;
-		port.InvalidPacket(data, InvalidPacketError::INVALID_CHECKSUM);
-		return false;
-	}
-	return true;
-}
-
 void Decoder::Handle(StackBuffer<4096>& buf, SerialPort& port)
 {
 	static FILE* errors = nullptr;
@@ -83,7 +69,6 @@ void Decoder::Handle(StackBuffer<4096>& buf, SerialPort& port)
 					}
 					char* nmeaSentenceRaw = buf.As<char>(dataPacket->NMEASentenceLength);
 					port.Read(nmeaSentenceRaw, dataPacket->NMEASentenceLength);
-					if (!VerifyCRC32(buf, port)) return;
 
 					std::string nmeaSentence(nmeaSentenceRaw, dataPacket->NMEASentenceLength);
 					port.GetMainLayer().HandleGPS(nmeaSentence);
@@ -115,7 +100,6 @@ void Decoder::Handle(StackBuffer<4096>& buf, SerialPort& port)
 
 			char* string = buf.As<char>(message->MessageLength);
 			port.Read(string, message->MessageLength);
-			if (!VerifyCRC32(buf, port)) return;
 
 			const char* from = GetModuleIDName(header->From);
 			std::string stdString(string, message->MessageLength);

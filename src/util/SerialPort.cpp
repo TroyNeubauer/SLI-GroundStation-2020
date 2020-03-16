@@ -5,7 +5,9 @@
 #include "Packet.h"
 #include "data/Decoder.h"
 
-#include <stdio.h>
+#include <cstdio>
+#include <chrono>
+#include <thread>
 
 #include <libusbp.hpp>
 #include <Hazel.h>
@@ -38,6 +40,7 @@ void OpenSerialPort(const std::string& portName, SerialPort* port)
 		HZ_ERROR("Failed to open serial port!");
 		return;
 	}
+	HZ_INFO("Opened port {}", portName);
 
 	DCB dcbConfig;
 
@@ -147,10 +150,18 @@ bool GetWindowsPortName(std::string& portName, SerialPort* port)
 	{
 		//FIXME. Prompt the usre which por to use
 		HZ_WARN("Detected mutiple ports!");
+		std::vector<std::string> avilablePorts;
 		for (int id : ports)
 		{
-			HZ_WARN("\tCOM{}", id);
+			DefaultFormatter formatter;
+			formatter << "COM" << id;
+			avilablePorts.emplace_back(formatter.Data(), formatter.Size());
 		}
+		std::promise<std::string> promise;
+		port->GetMainLayer().OpenDialog(avilablePorts, &promise);
+		portName = promise.get_future().get();
+		HZ_INFO("User selected port {}", portName);
+		return true;
 	}
 	port->GetMainLayer().Data.SerialPortStatus = MainData::SerialPortStatusEnum::CANNOT_FIND_VID;
 
@@ -349,7 +360,7 @@ bool GetPortName(std::string& portName, SerialPort* port)
 
 void SerialPortLoop(SerialPort* port)
 {
-
+	std::this_thread::sleep_for(std::chrono::seconds(3));
 	HZ_INFO("Starting Serial Port thread");
 	while (port->IsRunning())
 	{
@@ -371,25 +382,6 @@ void SerialPortLoop(SerialPort* port)
 		}
 		else
 		{
-
-			//We are connected to the serial port
-			uint8_t byte;
-			int magicCount = 0;
-			int missedBytes = 0;
-			while (magicCount != sizeof(uint32_t))
-			{
-				port->Read(&byte, sizeof(byte));
-				if (byte == MAGIC_VALUE)
-				{
-					magicCount++;
-				}
-				else
-				{
-					magicCount = 0;
-					missedBytes++;
-				}
-			}
-
 			StackBuffer<4096> buf;
 			PacketHeader* header = buf.Header();
 			port->Read(header, sizeof(PacketHeader));

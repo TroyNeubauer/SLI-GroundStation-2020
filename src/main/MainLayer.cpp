@@ -5,6 +5,8 @@
 #include <Hazel.h>
 #include <libusbp.hpp>
 
+#include <mutex>
+
 #include "util/ImGuiConsole.h"
 #include "util/SerialPort.h"
 
@@ -65,6 +67,22 @@ void SerialLog()
 
 }
 
+const char* dialogID = "Test Dialog";
+
+struct DialogData
+{
+	DialogData(char id, const std::vector<std::string>& options, std::promise<std::string>* promise) : ID{ id, 0x00 }, Options(options), Promise(promise), NewItem(true) {}
+
+	char ID[2];
+	std::vector<std::string> Options;
+	std::promise<std::string>* Promise;
+	bool NewItem;
+};
+
+
+static std::vector<DialogData> s_Dialogs;
+static std::mutex s_DialogsMutex;
+
 void MainLayer::OnImGuiRender()
 {
 	float arr[] = { 1,2,1,-1,5 };
@@ -76,10 +94,55 @@ void MainLayer::OnImGuiRender()
 	ImGui::End();
 	ImGui::Begin("Test1");
 	ImGui::Button("test2");
+
 	ImGui::End();
+	s_DialogsMutex.lock();
+	bool done = false;
+	for (auto& it = s_Dialogs.begin(); it != s_Dialogs.end(); it++)
+	{
+		DialogData& dialog = *it;
+
+		if (dialog.NewItem)
+		{
+			ImGui::OpenPopup(dialog.ID);
+			HZ_INFO("Opening dialog!");
+			dialog.NewItem = false;
+		}
+		
+		if (ImGui::BeginPopupModal(dialog.ID, nullptr, ImGuiWindowFlags_NoCollapse))
+		{
+			ImGui::Text("Select an option:");
+			
+			for (const std::string& option : dialog.Options)
+			{
+				if (ImGui::Button(option.c_str()))
+				{
+					ImGui::CloseCurrentPopup();
+					it->Promise->set_value(option);
+					//Break out of both loops
+					done = true;
+				}
+
+			}
+			ImGui::EndPopup();
+		}
+		if (done)
+		{
+			it = s_Dialogs.erase(it);
+			break;
+		}
+	}
+	s_DialogsMutex.unlock();
 
 	console.Render();
 }
+
+void MainLayer::OpenDialog(const std::vector<std::string>& options, std::promise<std::string>* promise)
+{
+	std::scoped_lock(s_DialogsMutex);
+	s_Dialogs.emplace_back('A' + s_Dialogs.size(), options, promise);
+}
+
 
 MainLayer::~MainLayer()
 {

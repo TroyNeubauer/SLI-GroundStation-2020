@@ -4,9 +4,9 @@ hazelWorkspace("GroundStation")
 setupHazel()
 
 include "vendor/libusbp"
+include "vendor/XBee"
 
 project "GroundStation"
-
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
