@@ -7,6 +7,3 @@
 [submodule "vendor/SLI-2020"]
 	path = vendor/SLI-2020
 	url = https://github.com/TroyNeubauer/SLI-2020.git
-[submodule "vendor/XBee"]
-	path = vendor/XBee
-	url = https://github.com/TroyNeubauer/xbee_ansic_library.git
