@@ -5,20 +5,20 @@
 
 #include "CRC.h"
 
-void SerialPrint(Formatter& formatter, LogLevelType level)
+void SerialPrint(Formatter& formatter, ModuleIDType from, LogLevelType level)
 {
-	SerialPrint(std::move(formatter), level);
+	SerialPrint(std::move(formatter), from, level);
 }
 
 //Implement global methods required by Module.h
-void SerialPrint(Formatter&& formatter, LogLevelType level)
+void SerialPrint(Formatter&& formatter, ModuleIDType from, LogLevelType level)
 {
 	switch (level)
 	{
-		case LL_TRACE: HZ_TRACE("{}", formatter.c_str()); break;
-		case LL_INFO: HZ_INFO("{}", formatter.c_str()); break;
-		case LL_WARN: HZ_WARN("{}", formatter.c_str()); break;
-		case LL_ERROR: HZ_ERROR("{}", formatter.c_str()); break;
+		case LL_TRACE: HZ_TRACE("[{}]: {}", GetModuleIDName(from), formatter.c_str()); break;
+		case LL_INFO: HZ_INFO("[{}]: {}", GetModuleIDName(from), formatter.c_str()); break;
+		case LL_WARN: HZ_WARN("[{}]: {}", GetModuleIDName(from), formatter.c_str()); break;
+		case LL_ERROR: HZ_ERROR("[{}]: {}", GetModuleIDName(from), formatter.c_str()); break;
 	}
 }
 
@@ -48,4 +48,12 @@ void GroundStationModule::Update()
 void GroundStationModule::RoutePacket(PacketBuffer& packet)
 {
 
+}
+
+extern "C"
+{
+	void Lights(int count)
+	{
+		HZ_INFO("Lights called. Blinking {} times", count);
+	}
 }

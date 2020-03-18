@@ -3,11 +3,12 @@
 class SerialPort;
 
 #include "Buffer.h"
+#include <XBee.h>
 
 class Decoder
 {
 public:
-	static void Handle(StackBuffer<4096>& buf, SerialPort& port);
+	static void Handle(RxDataResponse& response, SerialPort& port);
 
 };
 

@@ -4,6 +4,7 @@
 #include <thread>
 
 #include "Formatter.h"
+#include "util/ArduinoHeader.h"
 
 class MainLayer;
 
@@ -32,7 +33,8 @@ struct InvalidPacketData
 	SizedFormatter<64> Information;
 };
 
-class SerialPort
+
+class SerialPort : public Stream
 {
 public:
 	SerialPort(MainLayer& layer);
@@ -44,6 +46,10 @@ public:
 	bool Write(void* src, std::size_t bytes);
 
 	void InvalidPacket(InvalidPacketData& data, InvalidPacketError error);
+
+	virtual bool available();
+	virtual uint8_t read();
+	virtual void write(uint8_t value);
 
 private:
 	bool m_Running = true;

@@ -6,8 +6,9 @@
 #include "main/MainLayer.h"
 #include "Module.h"
 
-void Decoder::Handle(StackBuffer<4096>& buf, SerialPort& port)
+void Decoder::Handle(RxDataResponse& response, SerialPort& port)
 {
+	PacketBuffer buf(response.getData(), response.getDataLength());
 	static FILE* errors = nullptr;
 	if (errors == nullptr)
 	{
@@ -48,6 +49,16 @@ void Decoder::Handle(StackBuffer<4096>& buf, SerialPort& port)
 		}
 		case PacketType::STATUS:
 		{
+			StatusPacket* status = buf.Ptr<StatusPacket>();
+			if (status->Status == StatusValue::MODULE_ERROR)
+			{
+				ErrorStatusPacket* errorStatus = buf.Ptr< ErrorStatusPacket>();
+				HZ_ERROR("Error in {}, Code: {}, while doing: {}", GetModuleIDName(header->From), errorStatus->ErrorCode, errorStatus->Operation);
+			}
+			else
+			{
+				HZ_INFO("[{}]: Status: {}", GetModuleIDName(header->From), status->Status);
+			}
 
 			return;
 		}
@@ -58,8 +69,7 @@ void Decoder::Handle(StackBuffer<4096>& buf, SerialPort& port)
 				case ModuleID::GPS:
 				{
 					DataPacket_GPS* dataPacket = buf.Ptr<DataPacket_GPS>();
-					port.Read(dataPacket, sizeof(DataPacket_GPS));
-					if (dataPacket->NMEASentenceLength > 5 * MAX_NMEA_LENGTH)
+					if (dataPacket->NMEASentenceLength > MAX_PACKET_SIZE)
 					{
 						InvalidPacketData data;
 						data.InvalidValue.Offset = sizeof(PacketHeader) + offsetof(DataPacket_GPS, NMEASentenceLength);
@@ -68,17 +78,20 @@ void Decoder::Handle(StackBuffer<4096>& buf, SerialPort& port)
 						return;
 					}
 					char* nmeaSentenceRaw = buf.As<char>(dataPacket->NMEASentenceLength);
-					port.Read(nmeaSentenceRaw, dataPacket->NMEASentenceLength);
 
 					std::string nmeaSentence(nmeaSentenceRaw, dataPacket->NMEASentenceLength);
 					port.GetMainLayer().HandleGPS(nmeaSentence);
 					return;
 				}
+				case ModuleID::STM32F103:
+				{
+					DataPacket_STMF103* data = buf.Ptr<DataPacket_STMF103>();
+					HZ_INFO("HZ: {}", data->UpdateLoopHZ);
+					return;
+				}
 				default:
 				{
-					InvalidPacketData data;
-					data.Information << "Unknown data packet for destination: " << GetModuleIDName(header->From);
-					port.InvalidPacket(data, InvalidPacketError::UNKNOWN_PACKET);
+					HZ_ASSERT(false, "Packet handler needs implementation");
 
 					return;
 				}
@@ -87,9 +100,8 @@ void Decoder::Handle(StackBuffer<4096>& buf, SerialPort& port)
 		case PacketType::MESSAGE:
 		{
 			MessagePacket* message = buf.Ptr<MessagePacket>();
-			port.Read(message, sizeof(MessagePacket));
 
-			if (message->MessageLength > MAX_MESSAGE_LENGTH)
+			if (message->MessageLength > MAX_MESSAGE_LENGTH || message->Level >= MAX_MESSAGE_LEVEL)
 			{
 				InvalidPacketData data;
 				data.InvalidValue.Offset = sizeof(PacketHeader) + offsetof(MessagePacket, MessageLength);
@@ -99,13 +111,12 @@ void Decoder::Handle(StackBuffer<4096>& buf, SerialPort& port)
 			}
 
 			char* string = buf.As<char>(message->MessageLength);
-			port.Read(string, message->MessageLength);
 
 			const char* from = GetModuleIDName(header->From);
 			std::string stdString(string, message->MessageLength);
 			DefaultFormatter formatter;
 			formatter << '[' << from << "]: " << stdString;
-			SerialPrint(formatter, message->Level);
+			SerialPrint(formatter, header->From, message->Level);
 
 			return;
 		}

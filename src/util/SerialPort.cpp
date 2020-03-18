@@ -11,6 +11,7 @@
 
 #include <libusbp.hpp>
 #include <Hazel.h>
+#include <XBee.h>
 
 const uint16_t radioVID = 0x0403;
 const uint16_t radioPID = 0x6001;
@@ -358,10 +359,61 @@ bool GetPortName(std::string& portName, SerialPort* port)
 	}
 }
 
+struct SerialPortData
+{
+	MainLayer* Layer;
+	XBeeWithCallbacks* Xbee;
+	SerialPort* Port;
+};
+
+void PrintResponse(XBeeResponse& res, uintptr_t d)
+{
+	SerialPortData* data = reinterpret_cast<SerialPortData*>(d);
+	HZ_WARN("Unknown responce ID: {}, Length: {}", res.getApiId(), res.getPacketLength());
+}
+
+void ZBRxResponseCallback(ZBRxResponse& res, uintptr_t d)
+{
+	HZ_TRACE("Got packet. {} bytes", res.getDataLength());
+	SerialPortData* data = reinterpret_cast<SerialPortData*>(d);
+	Decoder::Handle(res, *data->Port);
+}
+
+void ZBExplicitRxResponseCallback(ZBExplicitRxResponse& res, uintptr_t d)
+{
+	HZ_TRACE("Got packet. {} bytes", res.getDataLength());
+	SerialPortData* data = reinterpret_cast<SerialPortData*>(d);
+	Decoder::Handle(res, *data->Port);
+}
+
 void SerialPortLoop(SerialPort* port)
 {
-	std::this_thread::sleep_for(std::chrono::seconds(3));
+	std::this_thread::sleep_for(std::chrono::seconds(1));
 	HZ_INFO("Starting Serial Port thread");
+
+	XBeeWithCallbacks xbee;
+	SerialPortData data;
+	data.Layer = &port->GetMainLayer();
+	data.Port = port;
+	data.Xbee = &xbee;
+
+	xbee.onOtherResponse(PrintResponse, reinterpret_cast<uintptr_t>(&data));
+	xbee.onResponse(nullptr, 0);
+	xbee.onAtCommandResponse(nullptr, 0);
+	xbee.onModemStatusResponse(nullptr, 0);
+	xbee.onPacketError(nullptr, 0);
+	xbee.onRemoteAtCommandResponse(nullptr, 0);
+	xbee.onRx16IoSampleResponse(nullptr, 0);
+	xbee.onRx16Response(nullptr, 0);
+	xbee.onRx64IoSampleResponse(nullptr, 0);
+	xbee.onRx64Response(nullptr, 0);
+	xbee.onTxStatusResponse(nullptr, 0);
+	xbee.onZBRxIoSampleResponse(nullptr, 0);
+	xbee.onZBTxStatusResponse(nullptr, 0);
+
+	xbee.onZBRxResponse(ZBRxResponseCallback, reinterpret_cast<uintptr_t>(&data));
+	xbee.onZBExplicitRxResponse(ZBExplicitRxResponseCallback, reinterpret_cast<uintptr_t>(&data));
+
 	while (port->IsRunning())
 	{
 		if (!IsPortOpen(port))
@@ -382,10 +434,7 @@ void SerialPortLoop(SerialPort* port)
 		}
 		else
 		{
-			StackBuffer<4096> buf;
-			PacketHeader* header = buf.Header();
-			port->Read(header, sizeof(PacketHeader));
-			Decoder::Handle(buf, *port);
+			xbee.loop();
 
 		}
 	}
@@ -419,10 +468,43 @@ void SerialPort::InvalidPacket(InvalidPacketData& data, InvalidPacketError error
 
 }
 
+bool s_HasBufferedByte = false;
+uint8_t s_Buffer;
+
+bool SerialPort::available()
+{
+	if (!s_HasBufferedByte)
+	{
+		Read(&s_Buffer, sizeof(s_Buffer));
+		s_HasBufferedByte = true;
+	}
+	return true;
+}
+
+uint8_t SerialPort::read()
+{
+	if (s_HasBufferedByte)
+	{
+		s_HasBufferedByte = false;
+		return s_Buffer;
+	}
+	uint8_t buf;
+	Read(&buf, sizeof(buf));
+	return buf;
+}
+
+void SerialPort::write(uint8_t value)
+{
+	Write(&value, sizeof(value));
+}
+
+Stream* XBeeSerial = nullptr;
+
 
 SerialPort::SerialPort(MainLayer& layer) : m_Thread(SerialPortLoop, this), m_Layer(layer)
 {
-
+	HZ_ASSERT(!XBeeSerial, "XBeeSerial already exists! Cannot create mutiple serial ports!");
+	XBeeSerial = this;
 }
 
 void SerialPort::Close()

@@ -4,7 +4,6 @@ hazelWorkspace("GroundStation")
 setupHazel()
 
 include "vendor/libusbp"
-include "vendor/XBee"
 
 project "GroundStation"
 
@@ -25,9 +24,8 @@ project "GroundStation"
 	sysincludedirs
 	{
 		"vendor/NeoGPS/src/",
-		"vendor/EnumSerialPorts/",
 		"vendor/SLI-2020/Core/include/",
-		"vendor/CRC32",
+		"vendor/XBee",
 	}
 
 	defines
@@ -38,6 +36,7 @@ project "GroundStation"
 	links
 	{
 		"SLICore",
+		"XBee",
 	}
 
 
@@ -97,6 +96,7 @@ project "Test"
 	links
 	{
 		"SLICore",
+		"XBee",
 	}
 
 	LibUSBPDependencies()
@@ -121,6 +121,7 @@ project "NeoGPS"
 		"vendor/NeoGPS/src/",
 	}
 
+
 project "SLICore"
 	kind "StaticLib"
 	location "vendor/SLI-2020"
@@ -141,4 +142,24 @@ project "SLICore"
 	}
 
 	HazelIncludes()
+
+
+project "XBee"
+	kind "StaticLib"
+	location "vendor/XBee"
+
+	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
+	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
+
+	files
+	{
+		"vendor/XBee/**.h",
+		"vendor/XBee/**.cpp"
+	}
+
+	includedirs
+	{
+		"src/",
+		"vendor/NeoGPS/src/",
+	}
 
