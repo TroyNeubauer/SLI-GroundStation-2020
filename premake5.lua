@@ -19,13 +19,13 @@ project "GroundStation"
 	includedirs
 	{
 		"src/",
-		"vendor/XBee/",
 	}
 
 	sysincludedirs
 	{
 		"vendor/NeoGPS/src/",
 		"vendor/SLI-2020/Core/include/",
+		"vendor/XBee/",
 	}
 
 	defines
@@ -91,6 +91,7 @@ project "Test"
 		"vendor/EnumSerialPorts/",
 		"vendor/SLI-2020/Core/include/",
 		"vendor/CRC32",
+		"vendor/XBee/",
 	}
 
 	links

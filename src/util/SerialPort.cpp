@@ -11,7 +11,7 @@
 
 #include <libusbp.hpp>
 #include <Hazel.h>
-#include "XBee.h"
+#include <XBee.h>
 
 const uint16_t radioVID = 0x0403;
 const uint16_t radioPID = 0x6001;
