@@ -11,7 +11,7 @@
 
 #include <libusbp.hpp>
 #include <Hazel.h>
-#include <XBee.h>
+#include "XBee.h"
 
 const uint16_t radioVID = 0x0403;
 const uint16_t radioPID = 0x6001;
@@ -278,7 +278,7 @@ bool SerialPort::Read(void* dest, std::size_t bytes)
 {
 	if (fd == -1) return false;
 
-	ssize_t bytesRead = read(fd, dest, bytes);
+	ssize_t bytesRead = ::read(fd, dest, bytes);
 	if (bytesRead != bytes)
 	{
 		GetMainLayer().Data.SerialPortStatus = MainData::SerialPortStatusEnum::PORT_ERROR;
@@ -293,11 +293,11 @@ bool SerialPort::Read(void* dest, std::size_t bytes)
 
 }
 
-bool SerialPort::Write(void* buf, std::size_t bytes)
+bool SerialPort::Write(const void* buf, std::size_t bytes)
 {
 	if (fd == -1) return false;
 
-	ssize_t bytesWritten = write(fd, buf, bytes);
+	ssize_t bytesWritten = ::write(fd, buf, bytes);//Nasty xbee naming requires this
 	if (bytesWritten != bytes)
 	{
 		GetMainLayer().Data.SerialPortStatus = MainData::SerialPortStatusEnum::PORT_ERROR;

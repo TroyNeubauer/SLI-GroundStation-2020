@@ -98,7 +98,7 @@ void MainLayer::OnImGuiRender()
 	ImGui::End();
 	s_DialogsMutex.lock();
 	bool done = false;
-	for (auto& it = s_Dialogs.begin(); it != s_Dialogs.end(); it++)
+	for (auto it = s_Dialogs.begin(); it != s_Dialogs.end(); it++)
 	{
 		DialogData& dialog = *it;
 

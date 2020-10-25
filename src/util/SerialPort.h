@@ -43,7 +43,7 @@ public:
 	MainLayer& GetMainLayer() { return m_Layer; }
 
 	bool Read(void* dest, std::size_t bytes);
-	bool Write(void* src, std::size_t bytes);
+	bool Write(const void* src, std::size_t bytes);
 
 	void InvalidPacket(InvalidPacketData& data, InvalidPacketError error);
 
