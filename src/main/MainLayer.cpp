@@ -92,10 +92,11 @@ void MainLayer::OnImGuiRender()
 		HZ_INFO("clicked");
 	};
 	ImGui::End();
+
 	ImGui::Begin("Test1");
 	ImGui::Button("test2");
-
 	ImGui::End();
+	
 	s_DialogsMutex.lock();
 	bool done = false;
 	for (auto it = s_Dialogs.begin(); it != s_Dialogs.end(); it++)
